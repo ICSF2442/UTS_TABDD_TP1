@@ -4,7 +4,7 @@ import { Subscription, interval } from 'rxjs';
 import { TrackingService, VehiclePosition } from '../../core/services/tracking.service';
 
 @Component({
-  selector: 'app-map',
+  selector: 'map',
   templateUrl: './map.component.html',
   styleUrls: ['./map.component.scss']
 })
@@ -41,7 +41,6 @@ export class MapComponent implements OnInit, OnDestroy {
       const newPos: [number, number] = [v.latitude, v.longitude];
 
       if (!this.metroMarker) {
-        // Create marker on first emission
         const metroIcon = L.icon({
           iconUrl: 'https://cdn-icons-png.flaticon.com/512/7413/7413265.png',
           iconSize: [40, 40],
@@ -53,28 +52,25 @@ export class MapComponent implements OnInit, OnDestroy {
         return;
       }
 
-      // Prepare animation from last position to new one
       this.animStartPos = [this.currentLat, this.currentLon];
       this.animEndPos = newPos;
       this.animStartTime = performance.now();
 
-      // Immediately start animation
       this.animateMarker();
 
-      // Save current position for next frame
       this.currentLat = newPos[0];
       this.currentLon = newPos[1];
     });
   }
 
  private initMap() {
-  const southWest = L.latLng(41.10, -8.62);  // bottom-left corner
-  const northEast = L.latLng(41.13, -8.59);  // top-right corner
+  const southWest = L.latLng(41.10, -8.62);  
+  const northEast = L.latLng(41.13, -8.59);  
   const bounds = L.latLngBounds(southWest, northEast);
 
   this.map = L.map('map', {
     zoomControl: false,
-    dragging: false, // disable drag if you want a fixed camera
+    dragging: false, 
     scrollWheelZoom: true,
     doubleClickZoom: true,
     boxZoom: false,
@@ -89,7 +85,6 @@ export class MapComponent implements OnInit, OnDestroy {
     minZoom: 14
   }).addTo(this.map);
 
-  // Optional: lock to this bounding box
   this.map.setMaxBounds(bounds);
 }
 
@@ -116,7 +111,7 @@ export class MapComponent implements OnInit, OnDestroy {
       if (!this.animStartTime || !this.animStartPos || !this.animEndPos) return;
       const elapsed = now - this.animStartTime;
       const t = Math.min(elapsed / this.animDuration, 1);
-      const easeT = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; // smoother ease-in-out
+      const easeT = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; 
 
       const lat = this.animStartPos[0] + (this.animEndPos[0] - this.animStartPos[0]) * easeT;
       const lon = this.animStartPos[1] + (this.animEndPos[1] - this.animStartPos[1]) * easeT;

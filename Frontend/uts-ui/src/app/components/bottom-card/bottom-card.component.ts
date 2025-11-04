@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'app-bottom-card.component',
+  selector: 'bottom-card.component',
   imports: [],
   templateUrl: './bottom-card.component.html',
   styleUrl: './bottom-card.component.scss',

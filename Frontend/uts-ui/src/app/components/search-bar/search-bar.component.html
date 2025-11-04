@@ -1,0 +1,12 @@
+<div class="search-container">
+  <input
+    type="text"
+    placeholder="Para onde?"
+    [(ngModel)]="searchQuery"
+    (input)="onSearch()"
+  />
+  @if(searchQuery) {
+    <button (click)="clearSearch()"></button>
+  }
+  
+</div>
