@@ -1,12 +1,10 @@
-<div class="search-container">
+<div class="search-bar">
   <input
     type="text"
-    placeholder="Para onde?"
-    [(ngModel)]="searchQuery"
-    (input)="onSearch()"
+    [(ngModel)]="query"
+    placeholder="Search for a station or destination..."
+    (focus)="onFocus()"
+    (blur)="onBlur()"
   />
-  @if(searchQuery) {
-    <button (click)="clearSearch()"></button>
-  }
-  
+  <button (click)="search()"><i class="material-icons">Search</i></button>
 </div>

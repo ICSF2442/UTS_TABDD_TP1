@@ -9,5 +9,5 @@ export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'profile', component: ProfileComponent },
   { path: 'map', component: MapPageComponent },
-  { path: '**', redirectTo: 'login' } // fallback
+  { path: '**', redirectTo: 'login' }
 ];

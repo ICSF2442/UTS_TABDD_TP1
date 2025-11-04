@@ -1,22 +1,25 @@
-import { Component, EventEmitter, Output, Input } from '@angular/core';
+import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'search-bar',
-  imports: [FormsModule],
   templateUrl: './search-bar.component.html',
-  styleUrl: './search-bar.component.scss',
+  imports: [FormsModule],
+  styleUrls: ['./search-bar.component.scss']
 })
 export class SearchBarComponent {
-  @Output() search = new EventEmitter<string>();
-  searchQuery = '';
+  query: string = '';
+  focused = false;
 
-  onSearch() {
-    this.search.emit(this.searchQuery);
+  onFocus() {
+    this.focused = true;
   }
 
-  clearSearch() {
-    this.searchQuery = '';
-    this.search.emit('');
+  onBlur() {
+    this.focused = false;
+  }
+
+  search() {
+    console.log('Searching for:', this.query);
   }
 }

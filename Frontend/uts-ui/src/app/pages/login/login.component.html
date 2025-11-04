@@ -1,0 +1,52 @@
+<img
+  class="background"
+  src="assets/svgs/hand.svg"
+  alt="Wave background"
+  width="490"
+  height="490"
+/>
+
+<form id="form" (ngSubmit)="login()">
+  <div class="sub-container">
+    <h2>Welcome Back to <span>Urban Transport!</span></h2>
+
+    <input
+      id="email"
+      type="email"
+      placeholder="Your email"
+      required
+      [(ngModel)]="email"
+      name="email"
+    />
+    <input
+      id="password"
+      type="password"
+      placeholder="Your password"
+      required
+      [(ngModel)]="password"
+      name="password"
+    />
+
+    <div class="row">
+      <label>
+        <input type="checkbox" [(ngModel)]="keepSession" name="keepSession" />
+        Keep me logged in!
+      </label>
+      <a class="link" routerLink="/forgot-password">Forgot password?</a>
+    </div>
+
+    <button type="submit" class="login-btn">Login</button>
+    <a class="register-link" routerLink="/register"
+      >Don't have an account?</a
+    >
+  </div>
+
+  <div class="sub-container">
+    <img
+      src="assets/svgs/metro.svg"
+      alt="Users"
+      width="490"
+      height="490"
+    />
+  </div>
+</form>

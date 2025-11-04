@@ -1,1 +1,22 @@
-<p>bottom-card.component works!</p>
+<div class="bottom-card" [class.expanded]="expanded">
+  <div class="handle" (click)="toggleCard()"></div>
+
+  <div class="card-header">
+    <span>Nearby Metro Stops</span>
+    <i class="material-icons">teste</i>
+  </div>
+
+  <div class="card-content">
+    <ul>
+      <li>
+        Santo Ovídio <span>2 min</span>
+      </li>
+      <li>
+        D. João II <span>5 min</span>
+      </li>
+      <li>
+        João de Deus <span>7 min</span>
+      </li>
+    </ul>
+  </div>
+</div>

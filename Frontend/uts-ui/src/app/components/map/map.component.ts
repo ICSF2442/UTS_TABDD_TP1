@@ -42,7 +42,7 @@ export class MapComponent implements OnInit, OnDestroy {
 
       if (!this.metroMarker) {
         const metroIcon = L.icon({
-          iconUrl: 'https://cdn-icons-png.flaticon.com/512/7413/7413265.png',
+          iconUrl: 'assets/metro-icon.png',
           iconSize: [40, 40],
           iconAnchor: [20, 20],
         });
