@@ -1,0 +1,145 @@
+:host {
+  display: block;
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(135deg, #0078d7 40%, #ffffff 40%);
+}
+
+form {
+  z-index: 2;
+  position: absolute;
+  display: grid;
+  grid-template-columns: 51% 49%;
+  width: 950px;
+  height: 550px;
+  background: #fff;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: auto;
+  border-radius: 10px;
+  box-shadow: 0px 0px 50px 25px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+form::before {
+  content: '';
+  position: absolute;
+  background: #0078d7;
+  width: 51%;
+  height: 100%;
+  left: 0;
+  opacity: 0.3;
+}
+
+.sub-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 40px;
+}
+
+.sub-container:first-child {
+  align-items: center;
+  justify-content: center;
+}
+
+.sub-container:last-child {
+  gap: 20px;
+}
+
+.sub-container img {
+  width: 100%;
+  max-width: 400px;
+}
+
+h2 {
+  text-align: center;
+  font-family: 'Nunito', sans-serif;
+  text-transform: uppercase;
+  font-size: 1.4rem;
+  letter-spacing: 1.2px;
+  color: #222;
+  margin-bottom: 10px;
+
+  span {
+    color: #0078d7;
+  }
+}
+
+input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+  transition: all 0.2s ease-in-out;
+
+  &:focus {
+    outline: none;
+    border-color: #0078d7;
+    box-shadow: 0 0 0 2px rgba(0, 120, 215, 0.3);
+  }
+}
+
+.role-container {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+
+  label {
+    font-size: 0.95rem;
+    color: #444;
+  }
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  background-color: #0078d7;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+
+  &:hover {
+    background-color: #005fa3;
+  }
+}
+
+.link {
+  font-size: 0.9rem;
+  text-align: center;
+  color: #0078d7;
+  text-decoration: none;
+  display: block;
+  margin-top: 10px;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+@media only screen and (max-width: 950px) {
+  form {
+    width: 90%;
+    height: auto;
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+
+  form::before {
+    display: none;
+  }
+
+  .sub-container:first-child {
+    display: none;
+  }
+}
