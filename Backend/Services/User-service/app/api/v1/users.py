@@ -1,237 +1,130 @@
-# app/api/v1/users.py
-from fastapi import APIRouter, HTTPException, Depends, Header
-from datetime import datetime
+from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
-from jose import JWTError, jwt
-from app.domain.schemas.user_schema import UserCreate, UserOut, UserUpdate
-from app.domain.models.user import User
-from app.core.security import hash_password
-from app.core.config import settings
-from app.infrastructure.db.connection import SessionLocal
-from app.infrastructure.db.user_repository import UserRepository
-from app.infrastructure.db.favorite_repository import FavoriteRepository
-from app.infrastructure.db.feedback_repository import FeedbackRepository
-from app.domain.schemas.feedback_schema import (
-    FeedbackCreate,
-    FeedbackOut,
-)
-from app.domain.schemas.favorite_schema import (
-    FavoriteCreate,
-    FavoriteOut
-)
-
-
+from app.infrastructure.db.connection import get_db
+from app.core.services.user_service import UserService
+from app.api.v1.auth import get_current_user, require_role
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
-
-def get_db():
-    db = SessionLocal()
+@router.post("/", summary="Criar usuário")
+def create_user(
+    name: str,
+    email: str, 
+    password: str,
+    role: str = "user",
+    db: Session = Depends(get_db),
+    current_user = Depends(require_role("admin"))  # Apenas admin
+):
+    user_service = UserService(db)
+    
     try:
-        yield db
-    finally:
-        db.close()
+        created_user = user_service.create_user(name, email, password, role)
+        
+        return {
+            "message": "User criado com sucesso",
+            "user_id": created_user.user_id,
+            "name": created_user.name,
+            "email": created_user.email,
+            "role": created_user.role
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao criar user: {str(e)}")
 
-# ---------------------- AUTH ----------------------
-def get_current_user(authorization: str = Header(None), db: Session = Depends(get_db)):
-    # VALIDAÇAO DO JWT
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing or invalid token")
-    token = authorization.split(" ")[1]
+@router.get("/", summary="Listar usuários")
+def get_all_users(
+    skip: int = Query(0, description="Número de registos a saltar"),
+    limit: int = Query(100, description="Número máximo de registos a retornar"),
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    user_service = UserService(db)
+    
     try:
-        payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
-        email = payload.get("sub")
-        if not email:
-            raise HTTPException(status_code=401, detail="Invalid token payload")
+        users = user_service.get_all_users(skip, limit)
+        
+        return {
+            "users": [
+                {
+                    "user_id": user.user_id,
+                    "name": user.name,
+                    "email": user.email,
+                    "role": user.role,
+                    "created_at": user.created_at
+                }
+                for user in users
+            ],
+            "total": len(users)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao listar users: {str(e)}")
 
-        repo = UserRepository(db)
-        user = repo.find_by_email(email)
-        if not user:
-            raise HTTPException(status_code=401, detail="User not found")
-
-        return user
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
-
-
-def require_role(required_role: str):
-    def role_checker(current_user: User = Depends(get_current_user)):
-        if current_user.role != required_role:
-            raise HTTPException(status_code=403, detail="Forbidden: insufficient role")
-        return current_user
-    return role_checker
-
-
-# ---------------------- CRUD ----------------------
-
-@router.post("/", response_model=UserOut)
-def create_user(payload: UserCreate, db: Session = Depends(get_db)):
-    repo = UserRepository(db)
-
-    # Check for existing user
-    if repo.find_by_email(payload.email):
-        raise HTTPException(status_code=400, detail="Email already registered")
-
-    # Create and save user
-    hashed_pw = hash_password(payload.password)
-    user = User(None, payload.name, payload.email, hashed_pw, payload.role)
-    user = repo.save(user)
-    return UserOut(**user.__dict__)
-
-
-@router.get("/{user_id}", response_model=UserOut)
-def get_user(user_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    repo = UserRepository(db)
-    user = repo.find_by_id(user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return UserOut(**user.__dict__)
-
-
-@router.get("/all", response_model=list[UserOut])
-def get_all_users(db: Session = Depends(get_db), current_user: User = Depends(require_role("admin"))):
-    repo = UserRepository(db)
-    users = repo.find_all()
-    return [UserOut(**u.__dict__) for u in users]
-
-
-@router.put("/{user_id}", response_model=UserOut)
-def update_user(user_id: int, payload: UserUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    repo = UserRepository(db)
-    user = repo.find_by_id(user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    # Only allow self or admin
-    if current_user.user_id != user_id and current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="You can only edit your own profile")
-
-    # Apply changes
-    if payload.name:
-        user.name = payload.name
-    if payload.email:
-        user.email = payload.email
-    if payload.password:
-        user.password_hash = hash_password(payload.password)
-
-    repo.update(user)
-    return UserOut(**user.__dict__)
-
-
-@router.delete("/{user_id}")
-def delete_user(user_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    repo = UserRepository(db)
-    user = repo.find_by_id(user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    if current_user.user_id != user_id and current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="You can only delete your own account")
-
-    repo.delete(user)
-    return {"message": "User deleted successfully"}
-
-
-# ---------- Favorites ----------
-@router.post("/{user_id}/favorites", response_model=FavoriteOut)
-def add_favorite(
-    user_id: int,
-    payload: FavoriteCreate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    if current_user.user_id != user_id:
-        raise HTTPException(status_code=403, detail="Cannot modify another user's favorites")
-
-    repo = FavoriteRepository(db)
-    fav = repo.add_favorite(user_id, payload.line_id)
-    return FavoriteOut(
-        favorite_id=fav.favorite_id,
-        line_id=fav.line_id,
-        created_at=fav.created_at
-    )
-
-
-@router.get("/{user_id}/favorites", response_model=list[FavoriteOut])
-def get_favorites(
+@router.get("/{user_id}", summary="Obter usuário")
+def get_user(
     user_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user = Depends(get_current_user)
 ):
-    if current_user.user_id != user_id:
-        raise HTTPException(status_code=403, detail="Cannot view another user's favorites")
+    user_service = UserService(db)
+    
+    try:
+        user = user_service.get_user_by_id(user_id)
+        
+        return {
+            "user_id": user.user_id,
+            "name": user.name,
+            "email": user.email,
+            "role": user.role,
+            "created_at": user.created_at
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao obter user: {str(e)}")
 
-    repo = FavoriteRepository(db)
-    favs = repo.get_favorites(user_id)
-    return [
-        FavoriteOut(
-            favorite_id=f.favorite_id,
-            line_id=f.line_id,
-            created_at=f.created_at
-        )
-        for f in favs
-    ]
-
-
-@router.delete("/{user_id}/favorites/{line_id}")
-def remove_favorite(
+@router.put("/{user_id}", summary="Atualizar usuário")
+def update_user(
     user_id: int,
-    line_id: int,
+    name: str = None,
+    email: str = None,
+    password: str = None,
+    role: str = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user = Depends(require_role("admin"))  # Apenas admin
 ):
-    if current_user.user_id != user_id:
-        raise HTTPException(status_code=403, detail="Cannot modify another user's favorites")
+    user_service = UserService(db)
+    
+    try:
+        updated_user = user_service.update_user(user_id, name, email, password, role)
+        
+        return {
+            "message": "User atualizado com sucesso",
+            "user_id": updated_user.user_id,
+            "name": updated_user.name,
+            "email": updated_user.email,
+            "role": updated_user.role
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao atualizar user: {str(e)}")
 
-    repo = FavoriteRepository(db)
-    deleted = repo.remove_favorite(user_id, line_id)
-    if not deleted:
-        raise HTTPException(status_code=404, detail="Favorite not found")
-
-    return {"message": f"Line {line_id} removed from favorites"}
-
-
-# ---------- Feedback ----------
-@router.post("/{user_id}/feedback", response_model=FeedbackOut)
-def add_feedback(
-    user_id: int,
-    payload: FeedbackCreate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    if current_user.user_id != user_id:
-        raise HTTPException(status_code=403, detail="Cannot submit feedback for another user")
-
-    repo = FeedbackRepository(db)
-    fb = repo.add_feedback(user_id, payload.rating, payload.comments)
-    return FeedbackOut(
-        feedback_id=fb.feedback_id,
-        user_id=fb.user_id,
-        rating=fb.rating,
-        comments=fb.comments,
-        created_at=fb.created_at
-    )
-
-
-@router.get("/{user_id}/feedback", response_model=list[FeedbackOut])
-def get_feedback(
+@router.delete("/{user_id}", summary="Eliminar usuário")
+def delete_user(
     user_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_role("admin"))
+    current_user = Depends(require_role("admin"))  # Apenas admin
 ):
-    repo = FeedbackRepository(db)
-    feedbacks = repo.get_feedback_by_user(user_id)
-    return [
-        FeedbackOut(
-            feedback_id=f.feedback_id,
-            user_id=f.user_id,
-            rating=f.rating,
-            comments=f.comments,
-            created_at=f.created_at
-        )
-        for f in feedbacks
-    ]
-
-
-
-
+    user_service = UserService(db)
+    
+    try:
+        user_service.delete_user(user_id)
+        
+        return {
+            "message": "User eliminado com sucesso"
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao eliminar user: {str(e)}")
