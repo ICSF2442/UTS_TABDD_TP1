@@ -1,11 +1,10 @@
-from app.infrastructure.db.connection import Base
-
-# Modelos da BD - APENAS AQUI!
 from sqlalchemy import Column, Integer, String, DateTime
 from datetime import datetime
+from app.infrastructure.db.connection import Base
 
 class UserDB(Base):
     __tablename__ = "users"
+
     user_id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), nullable=False)
     email = Column(String(100), unique=True, nullable=False, index=True)
