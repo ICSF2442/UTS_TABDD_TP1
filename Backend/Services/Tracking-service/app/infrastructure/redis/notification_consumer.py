@@ -4,11 +4,12 @@ from datetime import datetime
 from app.infrastructure.db.connection import SessionLocal
 from app.infrastructure.db.notification_repository import NotificationRepository
 from app.infrastructure.db.user_repository import UserRepository
+from app.infrastructure.redis.connection import RedisConnection
 
 
 class NotificationConsumer:
     def __init__(self, redis_host="localhost", redis_port=6379):
-        self.redis = redis.Redis(host=redis_host, port=redis_port, decode_responses=True)
+        self.redis = RedisConnection().get_client()
         self.db = SessionLocal()
         self.user_repo = UserRepository(self.db)
         self.notification_repo = NotificationRepository(self.db)
@@ -16,7 +17,7 @@ class NotificationConsumer:
     def start(self):
         pubsub = self.redis.pubsub()
         pubsub.subscribe("notifications")
-        print("📡 Listening for notifications on Redis channel 'notifications'...")
+        print("Listening for notifications on Redis channel 'notifications'...")
 
         for message in pubsub.listen():
             if message["type"] == "message":

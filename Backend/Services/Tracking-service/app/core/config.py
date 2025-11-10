@@ -1,17 +1,10 @@
-from pydantic import BaseSettings
+import os
 
-class Settings(BaseSettings):
-    APP_NAME: str = "User Service"
-    VERSION: str = "1.0.0"
 
-    DB_SERVER: str = "localhost"
-    DB_NAME: str = "UrbanTransportDB"
-    DB_USER: str = "teste"  # !
-    DB_PASSWORD: str = "teste"  # !
-    DB_DRIVER: str = "ODBC Driver 17 for SQL Server"
-
-    JWT_SECRET: str = "supersecretkey"  # <!!!!!!! alterar mais tarde 31/outubro
-    JWT_ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+class Settings:
+    REDIS_HOST = "redis-14107.crce202.eu-west-3-1.ec2.redns.redis-cloud.com"
+    REDIS_PORT = 14107
+    REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "")
+    REDIS_STREAM_UPDATES = "tracking_updates"
 
 settings = Settings()

@@ -1,10 +1,10 @@
 from fastapi import FastAPI
-from application.api.v1.tracking import router as tracking_router
+from app.application.api.v1 import tracking
 
-app = FastAPI(title="Tracking Service API")
+app = FastAPI(title="Tracking Service")
 
-app.include_router(tracking_router)
+app.include_router(tracking.router)
 
 @app.get("/")
 def root():
-    return {"message": "Tracking Service is running"}
+    return {"status": "Tracking Service is running"}

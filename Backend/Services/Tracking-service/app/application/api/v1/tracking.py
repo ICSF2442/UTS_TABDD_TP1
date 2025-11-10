@@ -1,52 +1,56 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Body, HTTPException
 from datetime import datetime
-from app.domain.models.vehicle_position_model import VehiclePosition
-from app.infrastructure.redis.connection import RedisConnection
 from app.infrastructure.redis.tracking_repository import TrackingRepository
+from app.domain.models.vehicle_position_model import VehiclePosition
 
 router = APIRouter(prefix="/tracking", tags=["Tracking"])
 
+repo = TrackingRepository()
 
-def get_repo():
-    db = RedisConnection().get_client()
-    return TrackingRepository(db)
-
-
-# Update vehicle position
 @router.post("/update")
-def update_position(position: VehiclePosition, repo: TrackingRepository = Depends(get_repo)):
-    repo.update_vehicle_position(position)
-    return {"message": "Vehicle position updated"}
+def receive_vehicle_position(data: dict = Body(...)):
+    """
+    Recebe posicao.
+    """
+    try:
+        ts_str = data["timestamp"].replace("Z", "")
+        position = VehiclePosition(
+            vehicle_id=data["vehicle_id"],
+            line_id=data["line_id"],
+            latitude=data["latitude"],
+            longitude=data["longitude"],
+            speed=data.get("speed", 0.0),
+            timestamp=datetime.fromisoformat(ts_str),
+        )
+
+        repo.update_vehicle_position(position)
+
+        return {
+            "status": "ok",
+            "stored": True,
+            "vehicle_id": position.vehicle_id,
+            "timestamp": position.timestamp.isoformat()
+        }
+
+    except Exception as e:
+        print("Error while processing position:", e)
+        raise HTTPException(status_code=400, detail=str(e))
 
 
-# Get current vehicle position
-@router.get("/vehicle/{vehicle_id}")
-def get_vehicle_position(vehicle_id: str, repo: TrackingRepository = Depends(get_repo)):
-    data = repo.get_latest_position(vehicle_id)
-    if not data:
+@router.get("/latest/{vehicle_id}")
+def get_latest(vehicle_id: int):
+    """
+    Returns the last known position of a vehicle.
+    """
+    result = repo.get_latest_position(vehicle_id)
+    if not result:
         raise HTTPException(status_code=404, detail="Vehicle not found")
-    return data
+    return result
 
 
-# Get last N positions
-@router.get("/vehicle/{vehicle_id}/history")
-def get_vehicle_history(vehicle_id: str, count: int = 10, repo: TrackingRepository = Depends(get_repo)):
+@router.get("/history/{vehicle_id}")
+def get_history(vehicle_id: int, count: int = 10):
+    """
+    Returns the last N positions for replay or analysis.
+    """
     return repo.get_last_positions(vehicle_id, count)
-
-
-# Get delay
-@router.put("/delay/{trip_id}")
-def update_delay(trip_id: str, delay_minutes: int, repo: TrackingRepository = Depends(get_repo)):
-    repo.update_delay(trip_id, delay_minutes)
-    return {"message": f"Trip {trip_id} delay updated to {delay_minutes} minutes"}
-
-@router.put("/delay/{trip_id}")
-def update_delay(trip_id: str, delay_minutes: int, repo: TrackingRepository = Depends(get_repo)):
-    repo.update_delay(trip_id, delay_minutes)
-
-    repo.publish_trip_update(trip_id, delay_minutes, "delayed")
-
-    trip_line_id = "L1"  # < Mudar
-    repo.publish_notification(trip_line_id, delay_minutes)
-
-    return {"message": f"Trip {trip_id} delay updated and notification sent"}
