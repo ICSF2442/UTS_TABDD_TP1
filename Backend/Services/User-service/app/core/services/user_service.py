@@ -26,8 +26,8 @@ class UserService:
         
         return self.repo.save(user)
     
-    def get_all_users(self, skip: int = 0, limit: int = 100) -> list[User]:
-        return self.repo.find_all(skip, limit)
+    def get_all_users(self) -> list[User]:
+        return self.repo.find_all() 
     
     def get_user_by_id(self, user_id: int) -> User:
         user = self.repo.find_by_id(user_id)
