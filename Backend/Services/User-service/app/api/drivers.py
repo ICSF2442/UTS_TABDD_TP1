@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.infrastructure.db.connection import SessionLocal
-from app.infrastructure.db.driver_repository import DriverRepository
+from app.infrastructure.repositories.driver_repository import DriverRepository
 from app.domain.schemas.driver_schema import DriverCreate, DriverOut
 from app.domain.models.user import User
-from app.api.v1.users import get_current_user, require_role
+from app.api.users import get_current_user, require_role
 
 router = APIRouter(prefix="/drivers", tags=["Drivers"])
 

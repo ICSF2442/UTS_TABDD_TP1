@@ -1,6 +1,6 @@
 # app/core/services/user_service.py
 from sqlalchemy.orm import Session
-from app.infrastructure.db.user_repository import UserRepository
+from app.infrastructure.repositories.user_repository import UserRepository
 from app.domain.models.user import User
 from app.core.security import hash_password
 
