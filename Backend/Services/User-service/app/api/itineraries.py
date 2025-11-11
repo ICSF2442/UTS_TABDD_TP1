@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.infrastructure.db.connection import SessionLocal
-from app.infrastructure.db.itinerary_repository import ItineraryRepository
+from app.infrastructure.repositories.itinerary_repository import ItineraryRepository
 from app.domain.schemas.itinerary_schema import ItineraryCreate, ItineraryOut
 from app.domain.models.user import User
-from app.api.v1.users import get_current_user
+from app.api.users import get_current_user
 
 router = APIRouter(prefix="/itineraries", tags=["Itineraries"])
 

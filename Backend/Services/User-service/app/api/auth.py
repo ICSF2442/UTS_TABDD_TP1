@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from app.infrastructure.db.connection import get_db
-from app.infrastructure.db.user_repository import UserRepository
+from app.infrastructure.repositories.user_repository import UserRepository
 from app.core.security import verify_password, create_access_token, verify_access_token
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
