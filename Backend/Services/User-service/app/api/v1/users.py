@@ -32,17 +32,15 @@ def create_user(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao criar user: {str(e)}")
 
-@router.get("/", summary="Listar usuários")
+@router.get("/", summary="Listar todos os usuários")
 def get_all_users(
-    skip: int = Query(0, description="Número de registos a saltar"),
-    limit: int = Query(100, description="Número máximo de registos a retornar"),
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
     user_service = UserService(db)
     
     try:
-        users = user_service.get_all_users(skip, limit)
+        users = user_service.get_all_users()
         
         return {
             "users": [
@@ -54,8 +52,7 @@ def get_all_users(
                     "created_at": user.created_at
                 }
                 for user in users
-            ],
-            "total": len(users)
+            ]
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao listar users: {str(e)}")

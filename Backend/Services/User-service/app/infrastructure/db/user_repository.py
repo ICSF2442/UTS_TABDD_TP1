@@ -27,8 +27,8 @@ class UserRepository:
         record = self.db.query(UserDB).filter(UserDB.email == email).first()
         return self._to_domain(record)
 
-    def find_all(self, skip: int = 0, limit: int = 100) -> list[User]:
-        records = self.db.query(UserDB).offset(skip).limit(limit).all()
+    def find_all(self) -> list[User]:
+        records = self.db.query(UserDB).all()  
         return [self._to_domain(record) for record in records]
 
     def save(self, user: User) -> User:
